@@ -15,6 +15,17 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// ✅ GET satu user berdasarkan ID
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password');
+    if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ msg: 'Gagal mengambil data pengguna', error: err.message });
+  }
+};
+
 // ✅ CREATE pengguna baru
 exports.createUser = async (req, res) => {
   const { name, email, password, role, namaWarung } = req.body;
@@ -54,9 +65,6 @@ exports.updateUser = async (req, res) => {
   const { id } = req.params;
   const { name, email, password, role, status, namaWarung } = req.body;
 
-  // 🔍 LOG: Lihat data update yang dikirim
-  console.log('🛠️ Data diterima untuk update:', req.body);
-
   try {
     const user = await User.findById(id);
     if (!user) return res.status(404).json({ msg: 'Pengguna tidak ditemukan' });
@@ -66,7 +74,6 @@ exports.updateUser = async (req, res) => {
     if (role) user.role = role;
     if (typeof status !== 'undefined') user.status = status;
 
-    // ✅ Update namaWarung hanya jika role = penjual
     if (role === 'penjual') {
       user.namaWarung = namaWarung || '';
     } else {
@@ -109,7 +116,6 @@ exports.deleteUser = async (req, res) => {
   try {
     const deleted = await User.findByIdAndDelete(id);
     if (!deleted) return res.status(404).json({ msg: 'Pengguna tidak ditemukan' });
-
     res.json({ msg: 'Pengguna berhasil dihapus' });
   } catch (err) {
     res.status(500).json({ msg: 'Gagal menghapus pengguna', error: err.message });

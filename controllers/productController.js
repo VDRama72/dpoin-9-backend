@@ -1,4 +1,4 @@
-// ✅ FILE: backend/controllers/productController.js (Final Fix with commissionRate)
+// ✅ FILE: backend/controllers/productController.js
 
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
@@ -9,17 +9,48 @@ exports.getAllProducts = async (req, res) => {
   try {
     const { seller } = req.query;
     const filter = seller ? { sellerId: seller } : {};
-    const products = await Product.find(filter).populate('sellerId', 'name email namaWarung');
+
+    const products = await Product.find(filter)
+      .populate('sellerId', 'name email namaWarung role status balance address nohp');
+
     res.json(products);
   } catch (err) {
     res.status(500).json({ msg: 'Gagal mengambil produk', error: err.message });
   }
 };
 
-// ✅ CREATE oleh admin (dengan komisi default)
+// ✅ GET satu produk by ID (lebih tahan error)
+exports.getProductById = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    console.log('📦 Mencari produk dengan ID:', productId);
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ msg: 'ID produk tidak valid' });
+    }
+
+    const product = await Product.findOne({ _id: productId })
+      .populate('sellerId', 'name email namaWarung role status balance address nohp');
+
+    if (!product) return res.status(404).json({ msg: 'Produk tidak ditemukan' });
+
+    // Ubah sellerId menjadi user untuk konsistensi frontend
+    const productWithUser = {
+      ...product.toObject(),
+      user: product.sellerId,
+    };
+    delete productWithUser.sellerId;
+
+    res.json(productWithUser);
+  } catch (err) {
+    console.error('❌ Gagal ambil detail produk:', err.message);
+    res.status(500).json({ msg: 'Gagal mengambil detail produk', error: err.message });
+  }
+};
+
+// ✅ CREATE oleh admin
 exports.createProductByAdmin = async (req, res) => {
   const { name, description, price, sellerId, stock = 0, category } = req.body;
-
   try {
     const seller = await User.findById(sellerId);
     if (!seller || seller.role !== 'penjual') {
@@ -27,7 +58,6 @@ exports.createProductByAdmin = async (req, res) => {
     }
 
     const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
-    const commissionRate = 0.1; // default komisi 10%
 
     const newProduct = new Product({
       name,
@@ -38,7 +68,7 @@ exports.createProductByAdmin = async (req, res) => {
       storeName: seller.namaWarung || seller.name || 'Tanpa Nama',
       category,
       image: imagePath,
-      commissionRate
+      commissionRate: 0.1,
     });
 
     await newProduct.save();
@@ -48,7 +78,7 @@ exports.createProductByAdmin = async (req, res) => {
   }
 };
 
-// ✅ CREATE oleh seller (dengan komisi default)
+// ✅ CREATE oleh seller
 exports.createProductBySeller = async (req, res) => {
   const { name, description, price, stock = 0, category } = req.body;
   const sellerId = req.user.id || req.user._id;
@@ -60,7 +90,6 @@ exports.createProductBySeller = async (req, res) => {
     }
 
     const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
-    const commissionRate = 0.1; // default komisi 10%
 
     const newProduct = new Product({
       name,
@@ -71,7 +100,7 @@ exports.createProductBySeller = async (req, res) => {
       storeName: seller.namaWarung || seller.name || 'Tanpa Nama',
       category,
       image: imagePath,
-      commissionRate
+      commissionRate: 0.1,
     });
 
     await newProduct.save();

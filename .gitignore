@@ -1,3 +1,35 @@
-// .gitignore
-node_modules
+# ✅ FILE: backend/.gitignore (Revisi Paling Agresif)
+
+# Node.js dependencies
+node_modules/
+
+# Environment variables and sensitive files
 .env
+.env.atlas
+.env.*.local
+
+# Build artifacts (if any are generated in backend)
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE specific files
+.vscode/
+.idea/
+.DS_Store # macOS specific
+
+# ✅ BAGIAN INI KOREKSI UTAMA: Abaikan file-file untracked yang aneh dan ZIP
+# Mengabaikan semua file .zip di direktori ini
+*.zip
+# Mengabaikan file-file debug spesifik (pastikan namanya persis)
+console.log(data))
+echo
+res.json())
+
+# Mengabaikan folder dump (jika masih dibuat)
+dump/ 
